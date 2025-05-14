@@ -14,24 +14,56 @@ import static org.hamcrest.CoreMatchers.is;
 class AuthenticatedResourceTest {
 
     @Test
-    @TestSecurity(user = "bob")
-    void testAuthenticated() {
+    public void testHelloEndpoint() {
         given()
                 .when()
+                .redirects().follow(false)
                 .get()
                 .then()
-                .statusCode(200)
-                .body(is("bob"));
+                .statusCode(302);
     }
 
     @Test
-    @TestSecurity(user = "alice", roles = {"admin"})
-    void testAdmin() {
+    @TestSecurity(user = "alice", roles = { "user", "admin" })
+    public void testAdminEndpoint() {
         given()
                 .when()
                 .get("admin")
                 .then()
                 .statusCode(200)
-                .body(containsString("admin"));
+                .body(containsString("alice"));
+    }
+
+    @Test
+    @TestSecurity(user = "bob", roles = { "user" })
+    public void testAdminEndpointRejected() {
+        given()
+                .when()
+                .get("admin")
+                .then()
+                .statusCode(403)
+                .body(is(""));
+    }
+
+    @Test
+    @TestSecurity(user = "bob", roles = { "user" })
+    public void testUserEndpoint() {
+        given()
+                .when()
+                .get("user")
+                .then()
+                .statusCode(200)
+                .body(containsString("bob"));
+    }
+
+    @Test
+    @TestSecurity(user = "alice", roles = {})
+    public void testUserEndpointRejected() {
+        given()
+                .when()
+                .get("user")
+                .then()
+                .statusCode(403)
+                .body(is(""));
     }
 }
